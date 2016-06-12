@@ -4,9 +4,15 @@ import Html exposing (Html)
 import Svg exposing (..)
 import Svg.Attributes exposing (..)
 
-rocketSprite : Svg msg
-rocketSprite =
-  svg [ version "1.1", x "0", y "0", width "100px", viewBox "50 0 50 100" ]
+
+type alias Rocket = { x : Int, y : Int }
+
+initialRocket : Rocket
+initialRocket = { x = 0, y = 0 }
+
+rocketSprite : Rocket -> Svg msg
+rocketSprite rocket =
+  svg [ version "1.1", x (toString rocket.x), y (toString rocket.y), width "100px", viewBox "50 0 50 100" ]
     [
       g [ transform "translate(0,0)", fill "#5596c9" ]
       [
@@ -18,4 +24,4 @@ rocketSprite =
  
 main : Html msg
 main =
-  rocketSprite
+  rocketSprite initialRocket
