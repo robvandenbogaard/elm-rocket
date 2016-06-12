@@ -10,6 +10,11 @@ type alias Rocket = { x : Int, y : Int }
 initialRocket : Rocket
 initialRocket = { x = 0, y = 0 }
 
+type alias Universe = { rocket: Rocket }
+
+initialUniverse : Universe
+initialUniverse = { rocket = initialRocket }
+
 rocketSprite : Rocket -> Svg msg
 rocketSprite rocket =
   svg [ version "1.1", x (toString rocket.x), y (toString rocket.y), width "100px", viewBox "50 0 50 100" ]
@@ -21,7 +26,11 @@ rocketSprite rocket =
         Svg.path [ d "m 49.974,15.125 h 0.054 10.483 C 57.853,10.134 50.23,0 49.975,0 49.718,0 42.149,10.134 39.492,15.125 h 10.482 z" ] []
       ]
     ]
- 
+
+view : Universe -> Html msg
+view universe =
+  rocketSprite universe.rocket
+
 main : Html msg
 main =
-  rocketSprite initialRocket
+  view initialUniverse
