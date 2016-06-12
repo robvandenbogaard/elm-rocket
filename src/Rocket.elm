@@ -6,17 +6,24 @@ import Svg exposing (..)
 import Svg.Attributes exposing (..)
 import Keyboard exposing (KeyCode)
 import Key exposing (..)
+import AnimationFrame
+import Time exposing (Time)
 
-
-type alias Rocket = { x : Int, y : Int }
+type alias Movable = { x : Int, y : Int }
+type alias Rocket = Movable
 
 initialRocket : Rocket
 initialRocket = { x = 0, y = 0 }
 
-type alias Universe = { rocket: Rocket }
+type alias Missile = Movable
+
+initialMissile : Missile
+initialMissile = { x = 0, y = 0 }
+
+type alias Universe = { rocket: Rocket, missiles: List Missile }
 
 initialUniverse : Universe
-initialUniverse = { rocket = initialRocket }
+initialUniverse = { rocket = initialRocket, missiles = [] }
 
 rocketSprite : Rocket -> Svg msg
 rocketSprite rocket =
@@ -30,7 +37,23 @@ rocketSprite rocket =
     ]
   ]
 
-type Msg = KeyDown KeyCode
+missileSprite : Missile -> Svg msg
+missileSprite missile =
+  svg [ Svg.Attributes.style ("position: fixed; bottom: " ++ (toString missile.y) ++ "px; left: " ++ (toString missile.x)), version "1.1", x "0", y "0", width "100px", viewBox "25 0 50 100" ]
+  [
+    g [ fill "yellow" ]
+    [
+      Svg.path [ d "m 40.541,90.855 c 0.362,1.285 0.729,2.51 1.091,3.674 h 16.734 c 0.362,-1.165 0.728,-2.389 1.091,-3.674 H 40.541 z" ] []
+    ]
+  ]
+
+missileSprites : List Missile -> Html msg
+missileSprites missiles =
+  Html.div [] (List.map missileSprite missiles)
+
+type Msg =
+  TimeUpdate Time |
+  KeyDown KeyCode
 
 moveRocket : Int -> Universe -> Universe
 moveRocket amount universe =
@@ -40,11 +63,30 @@ move : Int -> { a | x : Int } -> { a | x : Int }
 move amount movable =
   { movable | x = movable.x + amount }
 
+fireMissile universe =
+  { universe | missiles = { x = universe.rocket.x, y = 200 + universe.rocket.y } :: universe.missiles }
+
+advanceMissile : Float -> Missile -> Missile
+advanceMissile dt model =
+  { model | y = model.y + 10 }
+
+cleanupMissiles : List Missile -> List Missile
+cleanupMissiles missiles =
+  List.filter missileNeedsToGo missiles
+
+missileNeedsToGo : Missile -> Bool
+missileNeedsToGo missile =
+  missile.y < 500
+
+applyPhysics : Float -> Universe -> Universe
+applyPhysics dt model =
+  { model | missiles = (List.map (advanceMissile dt) model.missiles) |> cleanupMissiles }
 applyEffectFromKey : KeyCode -> Universe -> Universe
 applyEffectFromKey keyCode universe = 
   case Key.fromCode keyCode of
     ArrowLeft -> moveRocket -10 universe
     ArrowRight -> moveRocket 10 universe
+    Space -> fireMissile universe
     _ -> universe
 
 init : (Universe, Cmd msg)
@@ -54,15 +96,23 @@ init =
 update : Msg -> Universe -> (Universe, Cmd msg)
 update msg universe = 
   case msg of
+    TimeUpdate dt -> (applyPhysics dt universe, Cmd.none)
     KeyDown keyCode -> (applyEffectFromKey keyCode universe, Cmd.none)
 
 subscriptions : Universe -> Sub Msg
 subscriptions model =
-  Keyboard.downs KeyDown
+  Sub.batch
+  [
+    Keyboard.downs KeyDown,
+    AnimationFrame.diffs TimeUpdate
+  ]
 
 view : Universe -> Html msg
 view universe =
-  rocketSprite universe.rocket
-
+  Html.div [] [
+    rocketSprite universe.rocket,
+    missileSprites universe.missiles
+  ]
+  
 main =
   Html.program { init = init, update = update, subscriptions = subscriptions, view = view }
