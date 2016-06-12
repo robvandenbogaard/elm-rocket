@@ -1,6 +1,7 @@
 module Rocket exposing (..)
 
 import Html exposing (Html)
+import Html.App as Html
 import Svg exposing (..)
 import Svg.Attributes exposing (..)
 
@@ -27,10 +28,14 @@ rocketSprite rocket =
       ]
     ]
 
+type Msg = Reset | GoLeft | GoRight
+
+update : Msg -> Universe -> Universe
+update msg model = initialUniverse
+
 view : Universe -> Html msg
 view universe =
   rocketSprite universe.rocket
 
-main : Html msg
 main =
-  view initialUniverse
+  Html.beginnerProgram { model = initialUniverse, view = view, update = update }
