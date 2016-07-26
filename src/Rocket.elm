@@ -1,7 +1,8 @@
 module Rocket exposing (..)
 
+import Html.App as App
 import Html exposing (Html)
-import Html.App as Html
+import Html.Attributes as HtmlAttr
 import Svg exposing (..)
 import Svg.Attributes exposing (..)
 import Keyboard exposing (KeyCode)
@@ -81,8 +82,9 @@ missileNeedsToGo missile =
 applyPhysics : Float -> Universe -> Universe
 applyPhysics dt model =
   { model | missiles = (List.map (advanceMissile dt) model.missiles) |> cleanupMissiles }
+
 applyEffectFromKey : KeyCode -> Universe -> Universe
-applyEffectFromKey keyCode universe = 
+applyEffectFromKey keyCode universe =
   case Key.fromCode keyCode of
     ArrowLeft -> moveRocket -10 universe
     ArrowRight -> moveRocket 10 universe
@@ -94,7 +96,7 @@ init =
   (initialUniverse, Cmd.none)
 
 update : Msg -> Universe -> (Universe, Cmd msg)
-update msg universe = 
+update msg universe =
   case msg of
     TimeUpdate dt -> (applyPhysics dt universe, Cmd.none)
     KeyDown keyCode -> (applyEffectFromKey keyCode universe, Cmd.none)
@@ -109,10 +111,10 @@ subscriptions model =
 
 view : Universe -> Html msg
 view universe =
-  Html.div [] [
+  Html.div [ HtmlAttr.style [ ("background", "black"), ("width", "100%"), ("height", "100%") ] ] [
     rocketSprite universe.rocket,
     missileSprites universe.missiles
   ]
-  
+
 main =
-  Html.program { init = init, update = update, subscriptions = subscriptions, view = view }
+  App.program { init = init, update = update, subscriptions = subscriptions, view = view }
